@@ -19,7 +19,7 @@ NAVER Cloud API에서 MyMemory로 변경한 이유는 Papago 인증 정보 없�
 | 500바이트 제한 | 텍스트와 OCR 결과를 UTF-8 바이트로 측정해 초과 시 413, 외부 API 미호출 | 경계값 및 OCR 초과 자동 테스트 통과 |
 | API 실패·일일 한도 | HTTP/응답 실패, 빈 결과, 연결 예외는 오류. 사용량 초과는 429. 가짜 번역문을 만들지 않음 | 모의 응답·예외 자동 테스트 통과. 실제 한도 초과 재현은 하지 않음 |
 | 이미지 파일 선택 | JPG·PNG·TIFF와 20MB 이하만 허용, 미지원 형식은 OCR 전에 거부. 이미지 미리보기 제공 | 형식 거부 자동 테스트 통과. 20MB 경계와 브라우저 드롭·미리보기 실측 없음 |
-| 실제 OCR | Tesseract.js worker가 샘플 PNG에서 영어 `Hello`를 인식. 한국어·일본어·자동 모델도 로드해 같은 이미지 처리가 완료됨 | 실제 worker 실행. 영어 샘플의 한국어 모델 결과 `너티10`은 영어 인식 정확도 증거가 아님. 한국어·일본어 원문 이미지 정확도 미검증 |
+| 실제 OCR | Tesseract.js worker가 샘플 PNG에서 영어 `Hello`를 인식. 한국어·일본어 10개 이미지도 각 언어 모델로 OCR 완료 | 실제 worker 실행. 10개 이미지의 정답 텍스트가 비어 있어 CER·WER 정확도 미평가 |
 | 이미지 OCR → 번역 | 실제 OCR이 읽은 `Hello`가 이미지 API 경로를 거쳐 MyMemory 요청으로 전달되고 번역 응답이 반환됨 | 실제 OCR + 모의 MyMemory 자동 테스트 통과. 외부 MyMemory까지 포함한 일괄 실호출은 미확인 |
 | 기록·즐겨찾기 | 성공한 텍스트 번역 기록, 즐겨찾기 추가·해제, 전체 삭제, `localStorage` 재읽기 및 손상 데이터 처리 | 저장소 자동 테스트 통과. 실제 브라우저 세션 간 보존 실측 없음. 이미지 번역은 기록에 저장하지 않음 |
 | 번역 상세 | 기록·즐겨찾기 항목 선택, 원문·번역문과 언어 표시, 뒤로 가기, 번역기로 열기, 즐겨찾기 변경 | SSR 출력 및 컴포넌트 콜백 자동 테스트 통과. 실제 브라우저 화면 전환 실측 없음 |
@@ -34,7 +34,7 @@ NAVER Cloud API에서 MyMemory로 변경한 이유는 Papago 인증 정보 없�
 | 실행 | 결과 |
 | --- | --- |
 | `npm install --no-audit --no-fund --fetch-retries=0 --fetch-timeout=10000` | 성공. `tesseract.js@7.0.0` 설치 및 잠금 파일 생성 |
-| `npm test` | **17개 통과, 0개 실패**. 번역·오류·OCR·저장소·상세 컴포넌트 테스트 |
+| `npm test` | **19개 통과, 0개 실패**. 번역·오류·OCR·저장소·상세 컴포넌트·정확도 계산 테스트 |
 | `npm run build` | 성공. TypeScript 검사와 Vite 프로덕션 빌드 완료 |
 | 실제 Tesseract.js OCR | `tests/fixtures/hello.png`에서 `en` → `Hello`, `ja` → `Hello`, `auto` → `Hello`; `ko` 모델은 로드·처리되었으나 영어 이미지에 `너티10` 반환 |
 | 실제 MyMemory 직접 호출 | `curl`로 `Hello`, `en|ko` 호출: HTTP 200, `responseStatus: 200`, `quotaFinished: false`, `translatedText: "반갑습니다,"` |
@@ -43,6 +43,24 @@ NAVER Cloud API에서 MyMemory로 변경한 이유는 Papago 인증 정보 없�
 | 개발 서버·브라우저 실측 | `npm run dev -- --host 127.0.0.1` → `listen EPERM ...127.0.0.1:5173`. 로컬 브라우저 전체 동작 검증 불가. Headless Chrome의 로컬 파일 실행도 종료 코드 134 |
 
 직접 `curl`의 실서비스 성공은 앱 서버 경유 번역 성공을 뜻하지 않는다. 현재 실행 환경에서는 서버의 실제 외부 연결이 막혀 있어 텍스트와 이미지의 **앱 내 실번역 성공은 미확인**이다. 자동 테스트의 모의 MyMemory 성공도 실서비스 성공으로 기록하지 않는다. API 실패 시 화면은 결과를 비우고 오류를 표시한다.
+
+## OCR 정량 평가 시스템 및 이번 실행
+
+이미지 원본은 `tests/images/`에 10개 있었다. 요청에 적힌 `test/images/` 폴더는 없었으므로 원본 위치와 파일명을 변경하지 않고 실제 폴더를 사용했다. 스크립트는 `test/images/`가 있으면 그쪽을 우선 사용한다. PNG·JPG·JPEG·WEBP를 탐색하고 `ko`+숫자는 `kor`, `jp`+숫자는 `jpn` 모델로 처리한다. 다른 파일명은 `invalid_filename` 오류로 기록한다. OCR 호출과 모델 설정은 앱의 `server/tesseract-ocr.mjs`를 재사용하며 신뢰도만 추가로 읽는다.
+
+| 항목 | 이번 실행 결과 |
+| --- | --- |
+| 실행 명령 | `npm run test:ocr:prepare`, `npm run test:ocr` 모두 성공 |
+| 이미지 수 | 전체 10개: 한국어 5개, 일본어 5개, 잘못된 파일명 0개 |
+| OCR 실행 | 추출 텍스트가 있는 성공 10개, 실패 0개, OCR 엔진 오류 0개 |
+| 정확도 평가 | 정답 입력 0개. 한국어·일본어·전체 CER 및 WER 모두 **정확도 미평가** |
+| 처리 시간 | 최종 `test:ocr` 실행 평균 198.4 ms, 최대 299.6 ms. 이미지별 시간은 결과 보고서에 기록 |
+| 인식 경고 | 실행 콘솔에서 각 PNG에 `libpng warning: iCCP: extra compressed data` 출력. OCR은 완료됐다. 이미지의 ICC 프로필 메타데이터 관련 경고로 보이며 정확도 영향은 판단하지 않았다 |
+| 환경 | Node.js v24.22.2, macOS Darwin 27.0.0 arm64, Apple M3 Pro, Tesseract.js 7.0.0 |
+
+`test/ocr-ground-truth.json`의 각 `groundTruth`는 비어 있고 `ocrText`에는 실제 OCR 결과가 들어 있다. 사용자가 이미지를 확인하고 정답을 입력해야 한다. 재실행은 기존 `groundTruth`를 보존한다. 정답이 입력된 항목만 Unicode NFC·연속 공백/줄바꿈 한 칸 치환·양끝 공백 제거 후 Levenshtein 문자/단어 편집거리를 계산한다. CER·WER의 언어별·전체 값은 개별 비율의 평균이 아니라 **편집거리 합계 / 정답 길이 합계**다. 공백은 CER의 문자 수에 포함한다. OCR 결과를 정답으로 간주하지 않았다.
+
+실제 추출 텍스트, 신뢰도, 개별 처리 시간, 정확도 미평가 상태, 오류 사례·추정 원인 안내는 [OCR JSON 결과](reports/ocr-results.json)와 [OCR Markdown 보고서](reports/ocr-results.md)에 기록했다. 정답이 없는 상태에서 인식 오류 사례를 확정하거나 정확도 수치를 만들지 않았다.
 
 ## 원본 Papago와 기능 비교
 
@@ -63,4 +81,6 @@ REA History 클릭 Evidence `ev_841e37a85e3725e11f826c505be89fad184c76874650a651
 - `src/App.tsx`, `src/styles.css`, `src/storage.ts`: 화면, 동작, 로컬 데이터
 - `server/translation.mjs`, `server/tesseract-ocr.mjs`, `server/tessdata/`: 번역 API, OCR, 로컬 언어 모델
 - `tests/translation.test.mjs`, `tests/ocr.test.mjs`, `tests/storage.test.mjs`, `tests/ui.test.mjs`, `tests/fixtures/hello.png`: 자동 검증
+- `scripts/ocr-evaluate.mjs`, `tests/ocr-evaluate.test.mjs`: OCR 일괄 실행 및 Levenshtein 정확도 계산
+- `tests/images/`, `test/ocr-ground-truth.json`, `reports/ocr-results.json`, `reports/ocr-results.md`: 원본 테스트 이미지, 정답 입력 파일, 실행 결과
 - `README.md`: 실행 방법과 API 사용 한도

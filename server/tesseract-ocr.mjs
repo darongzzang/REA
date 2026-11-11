@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 const require = createRequire(import.meta.url);
 const OCR_LANGUAGES = { ko: 'kor', en: 'eng', ja: 'jpn', auto: ['kor', 'eng', 'jpn'] };
 
-export async function recognizeImage(bytes, source = 'auto', { createWorkerImpl } = {}) {
+export async function recognizeImageWithDetails(bytes, source = 'auto', { createWorkerImpl } = {}) {
   const languages = OCR_LANGUAGES[source];
   if (!languages) {
     const error = new Error('이미지 OCR은 한국어, 영어, 일본어만 지원합니다.');
@@ -28,8 +28,16 @@ export async function recognizeImage(bytes, source = 'auto', { createWorkerImpl 
   });
   try {
     const result = await worker.recognize(bytes);
-    return result?.data?.text?.trim() || '';
+    return {
+      text: result?.data?.text?.trim() || '',
+      confidence: Number.isFinite(result?.data?.confidence) ? result.data.confidence : null
+    };
   } finally {
     await worker.terminate();
   }
+}
+
+export async function recognizeImage(bytes, source = 'auto', options = {}) {
+  const result = await recognizeImageWithDetails(bytes, source, options);
+  return result.text;
 }

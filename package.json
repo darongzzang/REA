@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "test:ocr": "node scripts/ocr-evaluate.mjs",
+    "test:ocr:prepare": "node scripts/ocr-evaluate.mjs --prepare"
   },
   "dependencies": {
     "react": "19.2.3",

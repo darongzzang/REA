@@ -1,0 +1,195 @@
+{
+  "generatedAt": "2026-11-11T02:41:47.993Z",
+  "imageDirectory": "tests/images",
+  "summary": {
+    "totalImages": 10,
+    "byLanguage": {
+      "ko": 5,
+      "jp": 5
+    },
+    "invalidNames": 0,
+    "ocrSuccess": 10,
+    "ocrFailure": 0,
+    "engineErrors": 0,
+    "accuracyEvaluated": 0,
+    "accuracyUnevaluated": 10,
+    "accuracySkippedDueToOcrError": 0,
+    "averageDurationMs": 198.43785000000003,
+    "maxDurationMs": 299.611,
+    "accuracy": {
+      "ko": {
+        "evaluated": 0,
+        "characterEdits": 0,
+        "characterCount": 0,
+        "wordEdits": 0,
+        "wordCount": 0,
+        "cer": null,
+        "wer": null
+      },
+      "jp": {
+        "evaluated": 0,
+        "characterEdits": 0,
+        "characterCount": 0,
+        "wordEdits": 0,
+        "wordCount": 0,
+        "cer": null,
+        "wer": null
+      },
+      "overall": {
+        "evaluated": 0,
+        "characterEdits": 0,
+        "characterCount": 0,
+        "wordEdits": 0,
+        "wordCount": 0,
+        "cer": null,
+        "wer": null
+      }
+    }
+  },
+  "results": [
+    {
+      "fileName": "jp1.png",
+      "language": "jp",
+      "ocrLanguage": "jpn",
+      "caseId": 1,
+      "ocrText": "今日 わ 記 念 日 で す よ ね !",
+      "confidence": 82,
+      "durationMs": 299.611,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "jp2.png",
+      "language": "jp",
+      "ocrLanguage": "jpn",
+      "caseId": 2,
+      "ocrText": "私 の 名 前 わ キ ム で す 。",
+      "confidence": 93,
+      "durationMs": 237.19679200000007,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "jp3.png",
+      "language": "jp",
+      "ocrLanguage": "jpn",
+      "caseId": 3,
+      "ocrText": "味噌 汁 う まい な へ",
+      "confidence": 85,
+      "durationMs": 228.288541,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "jp4.png",
+      "language": "jp",
+      "ocrLanguage": "jpn",
+      "caseId": 4,
+      "ocrText": "や っ ぱり 和食 の 寿司 が いい ね",
+      "confidence": 95,
+      "durationMs": 249.42325000000005,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "jp5.png",
+      "language": "jp",
+      "ocrLanguage": "jpn",
+      "caseId": 5,
+      "ocrText": "心臓 お ささ げ よ う",
+      "confidence": 92,
+      "durationMs": 225.02166699999998,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "ko1.png",
+      "language": "ko",
+      "ocrLanguage": "kor",
+      "caseId": 1,
+      "ocrText": "저는 대학교에 다니고 있습니다.",
+      "confidence": 92,
+      "durationMs": 169.33062500000005,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "ko2.png",
+      "language": "ko",
+      "ocrLanguage": "kor",
+      "caseId": 2,
+      "ocrText": "저는 시흥에 거주합니다",
+      "confidence": 92,
+      "durationMs": 155.3403330000001,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "ko3.png",
+      "language": "ko",
+      "ocrLanguage": "kor",
+      "caseId": 3,
+      "ocrText": "너 이름이 뭐야?",
+      "confidence": 90,
+      "durationMs": 138.55683299999987,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "ko4.png",
+      "language": "ko",
+      "ocrLanguage": "kor",
+      "caseId": 4,
+      "ocrText": "국밥 때네\n아이고",
+      "confidence": 70,
+      "durationMs": 136.14270899999997,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    },
+    {
+      "fileName": "ko5.png",
+      "language": "ko",
+      "ocrLanguage": "kor",
+      "caseId": 5,
+      "ocrText": "오늘은 빼빼로 데이!!|",
+      "confidence": 93,
+      "durationMs": 145.46675000000005,
+      "status": "success",
+      "error": null,
+      "metrics": null,
+      "groundTruth": ""
+    }
+  ],
+  "environment": {
+    "node": "v24.22.2",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpu": "Apple M3 Pro",
+    "tesseractJs": "7.0.0",
+    "models": [
+      "kor",
+      "jpn"
+    ]
+  },
+  "normalization": "Unicode NFC; all whitespace runs to one ASCII space; trim; CER counts Unicode codepoints including spaces; WER splits on spaces",
+  "metricsFormula": "sum(Levenshtein edit distances) / sum(ground-truth lengths)"
+}

@@ -35,6 +35,12 @@ MyMemory로 변경한 이유는 NAVER Cloud의 번역·이미지 API 인증 정�
 ```bash
 npm test
 npm run build
+npm run test:ocr:prepare
+npm run test:ocr
 ```
 
-실제 API 호출 결과와 이미지 OCR 검증 한계는 [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md)에 기록했습니다.
+OCR 평가 명령은 현재 이미지가 들어 있는 `tests/images/`를 사용합니다. `test/images/`가 있으면 그 폴더를 우선 사용하며, PNG·JPG·JPEG·WEBP를 자동 탐색합니다. `ko`+숫자 파일명에는 한국어 모델, `jp`+숫자 파일명에는 일본어 모델을 적용합니다. 원본 이미지는 수정하지 않습니다.
+
+`npm run test:ocr:prepare`는 실제 OCR 결과를 [test/ocr-ground-truth.json](test/ocr-ground-truth.json)에 기록합니다. 각 항목의 `groundTruth`에 **이미지를 직접 확인한 원문**을 입력하세요. `ocrText`를 정답으로 복사하지 마세요. `npm run test:ocr`을 실행하면 입력된 정답을 보존하면서 OCR을 다시 수행하고 [JSON 결과](reports/ocr-results.json)와 [읽기용 보고서](reports/ocr-results.md)를 갱신합니다. 정답이 없는 항목은 CER·WER를 계산하지 않습니다.
+
+실제 API 호출 결과와 OCR 검증 범위는 [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md)에 기록했습니다.
