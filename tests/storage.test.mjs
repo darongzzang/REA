@@ -16,6 +16,9 @@ test('번역 기록과 즐겨찾기는 localStorage에 저장되고 다시 읽�
   assert.deepEqual(translationStore.favorites(), [entry]);
   assert.equal(translationStore.toggleFavorite(entry), false);
   assert.deepEqual(translationStore.favorites(), []);
+  translationStore.toggleFavorite(entry);
+  translationStore.clearFavorites();
+  assert.deepEqual(translationStore.favorites(), []);
   translationStore.clearHistory();
   assert.deepEqual(translationStore.history(), []);
 });

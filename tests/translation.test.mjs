@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'node:stream';
+import { readFile } from 'node:fs/promises';
 import { handleTranslation } from '../server/translation.mjs';
 
 function request(url, body, contentType = 'application/json') {
@@ -110,4 +111,46 @@ test('OCR 실패는 MyMemory 호출을 생략하고 결과를 만들지 않는�
   await handleTranslation(req, res, { recognizeImageImpl: async () => '', fetchImpl: async () => { throw new Error('should not call'); } });
   assert.equal(res.status, 422);
   assert.equal(res.body.result, undefined);
+});
+
+test('실제 Tesseract worker가 샘플 PNG를 읽고 이미지 번역 경로에 전달한다', async () => {
+  const image = await readFile('tests/fixtures/hello.png');
+  const form = new FormData();
+  form.set('source', 'en'); form.set('target', 'ko'); form.set('image', new File([image], 'hello.png', { type: 'image/png' }));
+  const encoded = new Request('http://localhost/upload', { method: 'POST', body: form });
+  const { req, res } = request('/api/image-translate', Buffer.from(await encoded.arrayBuffer()), encoded.headers.get('content-type'));
+  await handleTranslation(req, res, { fetchImpl: async url => {
+    assert.equal(url.searchParams.get('q'), 'Hello');
+    assert.equal(url.searchParams.get('langpair'), 'en|ko');
+    return success('안녕하세요');
+  } });
+  assert.equal(res.status, 200);
+  assert.deepEqual(res.body.result.data, { sourceText: 'Hello', targetText: '안녕하세요' });
+});
+
+test('OCR 텍스트가 500바이트를 넘으면 MyMemory를 호출하지 않는다', async () => {
+  const form = new FormData();
+  form.set('source', 'ko'); form.set('target', 'en'); form.set('image', new File(['image'], 'sample.png', { type: 'image/png' }));
+  const encoded = new Request('http://localhost/upload', { method: 'POST', body: form });
+  const { req, res } = request('/api/image-translate', Buffer.from(await encoded.arrayBuffer()), encoded.headers.get('content-type'));
+  await handleTranslation(req, res, { recognizeImageImpl: async () => '가'.repeat(167), fetchImpl: async () => { throw new Error('should not call'); } });
+  assert.equal(res.status, 413);
+  assert.equal(res.body.result, undefined);
+});
+
+test('지원하지 않는 이미지 형식은 OCR 전에 거부한다', async () => {
+  const form = new FormData();
+  form.set('source', 'en'); form.set('target', 'ko'); form.set('image', new File(['image'], 'sample.gif', { type: 'image/gif' }));
+  const encoded = new Request('http://localhost/upload', { method: 'POST', body: form });
+  const { req, res } = request('/api/image-translate', Buffer.from(await encoded.arrayBuffer()), encoded.headers.get('content-type'));
+  await handleTranslation(req, res, { recognizeImageImpl: async () => { throw new Error('should not OCR'); }, fetchImpl: async () => { throw new Error('should not translate'); } });
+  assert.equal(res.status, 400);
+  assert.equal(res.body.result, undefined);
+});
+
+test('MyMemory 연결 예외는 오류만 반환한다', async () => {
+  const { req, res } = request('/api/translate', JSON.stringify({ source: 'en', target: 'ko', text: 'Hello' }));
+  await handleTranslation(req, res, { fetchImpl: async () => { throw new Error('network unavailable'); } });
+  assert.equal(res.status, 502);
+  assert.equal(res.body.translatedText, undefined);
 });

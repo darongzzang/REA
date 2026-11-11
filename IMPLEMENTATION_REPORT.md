@@ -1,73 +1,66 @@
-# 구현 및 검증 보고서
+# 구현 및 재검증 보고서
 
-갱신일: 2026-11-11
+갱신일: 2026-11-11. 이 문서는 현재 저장소의 코드와 이번 재실행 결과를 기준으로 한다. 테스트에서 모의 응답을 쓴 경우와 외부 서비스를 실제 호출한 경우를 구분했다.
 
-## API 변경
+## 현재 작업물
 
-기존 NAVER Cloud Papago Translation 및 Image Translation 중계를 제거했다. 인증 정보 없이 텍스트 번역을 사용할 수 있도록 [MyMemory REST API](https://mymemory.translated.net/doc/spec.php)의 `/get`으로 교체했다. 기존 React + TypeScript + Vite UI, 번역 기록, 즐겨찾기는 유지했다. 원본 Papago 사이트의 API 사용 방식과는 무관한 **재구현 앱의 선택**이다.
+React 19 + TypeScript + Vite 7 UI를 유지한다. 텍스트 번역은 서버의 `/api/translate`에서 [MyMemory REST API](https://mymemory.translated.net/doc/spec.php)를 호출한다. 이미지 번역은 `/api/image-translate`가 Tesseract.js로 OCR한 텍스트를 같은 번역 함수에 넘긴다. 운영체제 전용 Apple Vision 코드는 사용하지 않는다. OCR의 `eng`, `kor`, `jpn` 모델은 `server/tessdata/`에 포함되어 첫 실행 시 별도 모델 다운로드가 필요하지 않다.
 
-| 항목 | 현재 구현 |
-| --- | --- |
-| 텍스트 | 서버의 `/api/translate`가 `q`와 `langpair`를 MyMemory에 전달. 한국어·영어·일본어 우선 지원 |
-| 언어 선택·교환 | 화면의 원본·목표 언어를 매 요청의 `langpair`에 반영. 미지원·동일 언어 조합 거부 |
-| 자동 감지 | 한글·가나·라틴 문자로 명확한 입력만 감지. 한자만 있는 등 모호한 입력은 거부 |
-| 요청 크기 | `Buffer.byteLength(..., 'utf8')`로 500바이트 초과를 API 호출 전에 거부 |
-| 사용량 | [MyMemory 공식 한도](https://mymemory.translated.net/doc/usagelimits.php): 익명 무료 5,000자/일, 유효한 `de` 이메일 제공 시 50,000자/일. 앱은 서버가 반환한 사용량 초과를 429 오류로 표시 |
-| 이미지 | 운영체제 독립형 Tesseract.js OCR. 선택한 한국어·영어·일본어 모델로 읽은 텍스트를 같은 MyMemory 번역 함수에 전달. JPG·PNG·TIFF, 20MB 이하 |
-| 오류 | HTTP 오류, `responseStatus` 실패, 빈 번역문, 일일 사용량 초과, OCR 실패 시 번역 결과를 만들지 않음 |
-| 기록·즐겨찾기 | 기존 `localStorage` 구현 유지. 성공한 텍스트 번역만 기록에 추가 |
-| 번역 상세 | 기록·즐겨찾기 항목에서 독립 화면으로 진입. 원문·번역문, 언어, 각각의 TTS·복사, 즐겨찾기 추가·해제, 이전 목록으로 돌아가기 및 번역기에서 열기 제공 |
+NAVER Cloud API에서 MyMemory로 변경한 이유는 Papago 인증 정보 없이 공개 무료 REST API로 번역을 실행하기 위해서다. 이것은 **재구현 앱의 API 선택**이며 원본 Papago의 내부 API 분석 결과가 아니다. [MyMemory 공식 사용량 문서](https://mymemory.translated.net/doc/usagelimits.php) 기준 익명 무료 한도는 하루 5,000자, 유효한 `de` 이메일을 제공하면 하루 50,000자다. 앱은 선택적 `MYMEMORY_EMAIL` 환경 변수를 `de`에 전달한다. 요청 한 건의 텍스트는 UTF-8 500바이트 이하로 제한한다.
 
-MyMemory의 요청당 500바이트 제한 때문에 긴 텍스트와 긴 OCR 결과는 번역하지 않는다. 문장 분할은 문맥과 번역 단위를 바꾸므로 자동 적용하지 않았다. Apple Vision 의존성은 제거했다. [Tesseract.js 공식 문서](https://github.com/naptha/tesseract.js)는 브라우저와 Node.js에서 WebAssembly OCR을 지원하며, 언어 데이터는 첫 사용 시 다운로드할 수 있다고 설명한다. 시스템 `curl`은 Node `fetch`가 DNS 조회에 실패하는 환경에서만 재시도에 사용한다.
+## 기능별 재검증
 
-## 실제 외부 API 확인
-
-2026-11-11에 `curl -G https://api.mymemory.translated.net/get`으로 세 언어쌍을 실제 호출했다. 모두 **HTTP 요청 성공**, `responseStatus: 200`, `quotaFinished: false`를 반환했다.
-
-| 요청 | 실제 `responseData.translatedText` |
-| --- | --- |
-| `안녕하세요`, `ko|en` | `Hi,` |
-| `Hello`, `en|ja` | `こんにちは` |
-| `ありがとう`, `ja|ko` | `감사합니다` |
-
-이 문자열은 MyMemory의 실제 응답이며 앱이 생성한 대체 문구가 아니다.
-
-같은 샌드박스에서 Node의 기본 `fetch`는 `ENOTFOUND`, Node 자식 프로세스의 `curl`도 `Could not resolve host: api.mymemory.translated.net`으로 실패했다. 따라서 **앱 서버 경로를 통한 실서비스 번역 성공은 확인하지 못했다.** 직접 `curl` 호출의 성공과 서버 경로의 실패를 구분한다. 일반 네트워크 환경에서의 서버 경로 재검증이 남아 있다.
-
-## 테스트 결과
-
-| 검사 | 결과 |
-| --- | --- |
-| `npm test` | 13개 통과: 언어쌍, 500바이트 경계, 사용량·실패 응답, 미지원 언어, OCR worker의 모델 선택·종료, OCR 텍스트 연결, 기록·즐겨찾기, UI |
-| `npm run build` | TypeScript 검사 및 Vite 프로덕션 빌드 성공. 상세 화면 추가 후 재실행 |
-| `npm run dev -- --host 127.0.0.1` | 실패: 이 샌드박스의 `listen EPERM`으로 브라우저에서 로컬 앱을 열 수 없음 |
-| MyMemory 실제 REST 호출 | 성공: `ko|en`, `en|ja`, `ja|ko` 모두 `responseStatus: 200` |
-| 앱 서버 경로의 실제 외부 호출 | 실패: 현재 샌드박스의 DNS 제한으로 502 반환. 가짜 번역문 없음 |
-| `npm install` / 실제 Tesseract.js 이미지 인식 | 실패: npm 레지스트리 DNS `ENOTFOUND`, 오프라인 설치는 `ENOTCACHED`. 이 세션에서 실제 OCR 및 최종 이미지 번역 성공은 미확인 |
-| 이미지 번역 경로 | 모의 Tesseract worker와 MyMemory 응답 연결 테스트 통과. 실제 이미지 OCR 및 최종 이미지 번역 성공은 미확인 |
-
-API 성공 모의 테스트는 실서비스 성공의 증거로 취급하지 않는다. 이미지에 텍스트가 없거나 500바이트를 넘으면 MyMemory 요청을 보내지 않는다.
-
-## 원본과 재구현의 경계
-
-원본 Papago의 REA UI 구조·기능 관찰과 Evidence ID는 [REA_ANALYSIS.md](REA_ANALYSIS.md)에 그대로 보존했다. 원본의 번역 API 경로와 동작은 이 MyMemory 전환의 근거가 아니다. UI는 상단 기능 탭, 오른쪽 보관 메뉴, 텍스트·이미지 작업 영역을 유지한다. 문서·음성·웹사이트·용어집·설정 내부 기능은 계속 미구현이다.
-
-### 기능 비교: 번역 상세 화면
-
-| 기능 | 원본 Papago 관찰 | 재구현 분류 및 동작 |
+| 기능 | 현재 구현과 확인 결과 | 검증 범위 |
 | --- | --- | --- |
-| 번역 기록·즐겨찾기 목록 | 오른쪽 History·Favorites 메뉴 확인 | 기존 로컬 목록 유지 |
-| 저장 항목의 독립 상세 화면 | 비로그인 REA 캡처에서 항목을 확보하지 못해 존재 여부 미확인 | **추가 구현 기능**. 목록 클릭 시 `detail` 화면으로 이동 |
-| 상세 화면의 TTS·복사·즐겨찾기·뒤로 가기 | 원본의 항목별 상세 동작 미확인 | **추가 구현 기능**. 선택 항목의 내용과 원래 목록을 유지하며 조작 |
+| 텍스트 번역 | 한국어·영어·일본어 언어쌍을 MyMemory `q`, `langpair`에 연결. 성공 응답만 번역문과 기록에 저장 | 서버 자동 테스트 통과. MyMemory 직접 실호출 성공. 앱 서버 경유 실호출은 현재 환경에서 502 |
+| 언어 선택·교환 | 선택값이 다음 요청에 반영되고 교환 시 원본·목표가 바뀜. 자동 감지 중 교환 버튼 비활성화 | 언어쌍 서버 테스트 통과, UI 동작은 코드 확인. 브라우저 클릭 실측 없음 |
+| 자동 언어 감지 | 한글·가나·라틴 문자로 명확한 입력만 감지, 모호한 한자는 오류 | 서버 자동 테스트 통과 |
+| 미지원·동일 언어 | API 호출 전에 422 오류. 언어 메뉴에는 다른 언어도 표시되지만 이 서버에서는 한국어·영어·일본어만 번역 가능 | 서버 자동 테스트 통과 |
+| 500바이트 제한 | 텍스트와 OCR 결과를 UTF-8 바이트로 측정해 초과 시 413, 외부 API 미호출 | 경계값 및 OCR 초과 자동 테스트 통과 |
+| API 실패·일일 한도 | HTTP/응답 실패, 빈 결과, 연결 예외는 오류. 사용량 초과는 429. 가짜 번역문을 만들지 않음 | 모의 응답·예외 자동 테스트 통과. 실제 한도 초과 재현은 하지 않음 |
+| 이미지 파일 선택 | JPG·PNG·TIFF와 20MB 이하만 허용, 미지원 형식은 OCR 전에 거부. 이미지 미리보기 제공 | 형식 거부 자동 테스트 통과. 20MB 경계와 브라우저 드롭·미리보기 실측 없음 |
+| 실제 OCR | Tesseract.js worker가 샘플 PNG에서 영어 `Hello`를 인식. 한국어·일본어·자동 모델도 로드해 같은 이미지 처리가 완료됨 | 실제 worker 실행. 영어 샘플의 한국어 모델 결과 `너티10`은 영어 인식 정확도 증거가 아님. 한국어·일본어 원문 이미지 정확도 미검증 |
+| 이미지 OCR → 번역 | 실제 OCR이 읽은 `Hello`가 이미지 API 경로를 거쳐 MyMemory 요청으로 전달되고 번역 응답이 반환됨 | 실제 OCR + 모의 MyMemory 자동 테스트 통과. 외부 MyMemory까지 포함한 일괄 실호출은 미확인 |
+| 기록·즐겨찾기 | 성공한 텍스트 번역 기록, 즐겨찾기 추가·해제, 전체 삭제, `localStorage` 재읽기 및 손상 데이터 처리 | 저장소 자동 테스트 통과. 실제 브라우저 세션 간 보존 실측 없음. 이미지 번역은 기록에 저장하지 않음 |
+| 번역 상세 | 기록·즐겨찾기 항목 선택, 원문·번역문과 언어 표시, 뒤로 가기, 번역기로 열기, 즐겨찾기 변경 | SSR 출력 및 컴포넌트 콜백 자동 테스트 통과. 실제 브라우저 화면 전환 실측 없음 |
+| TTS·복사 | 텍스트 화면과 상세 화면에서 Web Speech API 및 Clipboard API 사용, 상세의 원문·번역문 각각 동작 | 상세 화면의 브라우저 API 모의 테스트 통과. 실제 소리·클립보드 실측 없음 |
+| 사전 링크 | `dict.naver.com`으로 여는 외부 링크 | 마크업 확인. 외부 페이지 이동 실측 없음 |
+| 문서·음성·웹사이트·용어집·설정 | 메뉴와 미구현 안내만 제공 | 코드 확인. 실제 기능 미구현 |
 
-REA에서 History 버튼 클릭 시나리오를 추가 실행했다(Evidence `ev_841e37a85e3725e11f826c505be89fad184c76874650a6516923d0b5f13352a7`). 버튼 클릭은 성공했지만 비로그인 상태에 저장된 항목이 없어 원본의 항목 상세 동작은 검증하지 못했다. 따라서 상세 화면을 원본 재현 기능으로 분류하지 않았다.
+실제 내용과 전환 로직이 있는 독립 화면은 **5개**다: 텍스트 번역, 이미지 번역, 번역 기록, 즐겨찾기, 번역 상세. 다섯 화면의 존재는 코드 확인이며, 자동 UI 테스트는 초기 화면과 목록·상세 컴포넌트를 검사했다. 모든 화면을 브라우저로 직접 이동하며 확인한 결과는 아니다. 미구현 안내 화면은 이 숫자에서 제외했다.
 
-실제 내용과 전환이 있는 화면은 **5개**로 확인했다: 텍스트 번역, 이미지 번역, 번역 기록, 즐겨찾기, 번역 상세. 문서·음성·웹사이트·용어집·설정의 미구현 안내는 이 숫자에 포함하지 않았다. 상세 화면은 `Screen`의 독립 상태이며 기록·즐겨찾기 어느 쪽에서 들어왔는지 보관해 해당 목록으로 돌아간다. 즐겨찾기 해제 후 목록으로 돌아가면 기존 저장소 상태에 따라 항목이 사라진다.
+## 실행 결과와 오류
 
-## 파일
+| 실행 | 결과 |
+| --- | --- |
+| `npm install --no-audit --no-fund --fetch-retries=0 --fetch-timeout=10000` | 성공. `tesseract.js@7.0.0` 설치 및 잠금 파일 생성 |
+| `npm test` | **17개 통과, 0개 실패**. 번역·오류·OCR·저장소·상세 컴포넌트 테스트 |
+| `npm run build` | 성공. TypeScript 검사와 Vite 프로덕션 빌드 완료 |
+| 실제 Tesseract.js OCR | `tests/fixtures/hello.png`에서 `en` → `Hello`, `ja` → `Hello`, `auto` → `Hello`; `ko` 모델은 로드·처리되었으나 영어 이미지에 `너티10` 반환 |
+| 실제 MyMemory 직접 호출 | `curl`로 `Hello`, `en|ko` 호출: HTTP 200, `responseStatus: 200`, `quotaFinished: false`, `translatedText: "반갑습니다,"` |
+| 이전 직접 실호출 | `안녕하세요` `ko|en` → `Hi,`; `Hello` `en|ja` → `こんにちは`; `ありがとう` `ja|ko` → `감사합니다`. 모두 `responseStatus: 200`, `quotaFinished: false` |
+| 앱 서버 번역 함수의 실제 외부 호출 | `translateWithMyMemory({ source:'en', target:'ko', text:'Hello' })` → **502**, `MyMemory API 연결 또는 응답 처리에 실패했습니다.`. 이 환경의 Node DNS 조회 및 자식 `curl` 호스트 조회 실패. 번역문 없음 |
+| 개발 서버·브라우저 실측 | `npm run dev -- --host 127.0.0.1` → `listen EPERM ...127.0.0.1:5173`. 로컬 브라우저 전체 동작 검증 불가. Headless Chrome의 로컬 파일 실행도 종료 코드 134 |
 
-- `src/App.tsx`, `src/styles.css`: 기존 화면과 상호작용
-- `server/translation.mjs`: MyMemory 중계, 언어·크기·오류 검사, 이미지 경로
-- `server/tesseract-ocr.mjs`: Tesseract.js OCR 및 언어 모델 선택
-- `vite.config.ts`: 개발 서버 API 미들웨어
-- `tests/translation.test.mjs`, `tests/storage.test.mjs`, `tests/ui.test.mjs`: 검증
+직접 `curl`의 실서비스 성공은 앱 서버 경유 번역 성공을 뜻하지 않는다. 현재 실행 환경에서는 서버의 실제 외부 연결이 막혀 있어 텍스트와 이미지의 **앱 내 실번역 성공은 미확인**이다. 자동 테스트의 모의 MyMemory 성공도 실서비스 성공으로 기록하지 않는다. API 실패 시 화면은 결과를 비우고 오류를 표시한다.
+
+## 원본 Papago와 기능 비교
+
+원본 사이트에서 REA로 확인한 UI 구조와 Evidence ID는 [REA_ANALYSIS.md](REA_ANALYSIS.md)에 유지한다. 상단 텍스트·이미지 등 기능 탭, 오른쪽 History·Favorites 메뉴, 원문·결과 작업 영역을 재구현 UI에 반영했다. 이 보고서의 앱 기능 테스트는 원본 사이트의 내부 구현을 증명하지 않는다.
+
+| 기능 | 원본 Papago 관찰 | 현재 재구현 분류 |
+| --- | --- | --- |
+| 텍스트·이미지 작업 영역과 주요 메뉴 | REA UI 분석에 기록 | 관찰한 UI 구조를 반영. 번역 엔진은 MyMemory, OCR은 Tesseract.js |
+| History·Favorites 메뉴 | REA에서 메뉴 확인 | 로컬 저장소 기반 목록 구현 |
+| 저장 항목의 독립 상세 화면 | 비로그인 캡처에서 항목이 없어 존재 여부 확인 불가 | **추가 구현 기능**. 기록·즐겨찾기 항목을 누르면 독립 화면 표시 |
+| 상세 화면의 TTS·복사·즐겨찾기·뒤로 가기 | 원본의 항목별 상세 조작 확인 불가 | **추가 구현 기능** |
+| 문서·음성·웹사이트·용어집·설정 내부 기능 | 메뉴는 관찰 | 재구현에서 미구현 |
+
+REA History 클릭 Evidence `ev_841e37a85e3725e11f826c505be89fad184c76874650a6516923d0b5f13352a7`은 버튼 클릭 성공까지만 확인했다. 저장 항목이 없었으므로 상세 화면을 원본 재현 기능으로 분류하지 않는다.
+
+## 관련 파일
+
+- `src/App.tsx`, `src/styles.css`, `src/storage.ts`: 화면, 동작, 로컬 데이터
+- `server/translation.mjs`, `server/tesseract-ocr.mjs`, `server/tessdata/`: 번역 API, OCR, 로컬 언어 모델
+- `tests/translation.test.mjs`, `tests/ocr.test.mjs`, `tests/storage.test.mjs`, `tests/ui.test.mjs`, `tests/fixtures/hello.png`: 자동 검증
+- `README.md`: 실행 방법과 API 사용 한도

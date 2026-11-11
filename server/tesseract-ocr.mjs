@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 
 const require = createRequire(import.meta.url);
 const OCR_LANGUAGES = { ko: 'kor', en: 'eng', ja: 'jpn', auto: ['kor', 'eng', 'jpn'] };
@@ -20,7 +21,11 @@ export async function recognizeImage(bytes, source = 'auto', { createWorkerImpl 
       throw error;
     }
   }
-  const worker = await createWorker(languages);
+  const worker = await createWorker(languages, 1, {
+    langPath: process.env.TESSDATA_DIR || resolve(process.cwd(), 'server/tessdata'),
+    gzip: false,
+    cacheMethod: 'none'
+  });
   try {
     const result = await worker.recognize(bytes);
     return result?.data?.text?.trim() || '';
