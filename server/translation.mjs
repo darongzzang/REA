@@ -1,4 +1,4 @@
-import { recognizeImage } from './vision-ocr.mjs';
+import { recognizeImage } from './tesseract-ocr.mjs';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -137,7 +137,7 @@ export async function handleTranslation(req, res, { env = process.env, fetchImpl
         json(res, 422, { error: '이미지 번역은 한국어, 영어, 일본어만 지원합니다.' });
         return true;
       }
-      text = await recognizeImageImpl(Buffer.from(await file.arrayBuffer()));
+      text = await recognizeImageImpl(Buffer.from(await file.arrayBuffer()), source);
       if (typeof text !== 'string' || !text.trim()) {
         json(res, 422, { error: '이미지에서 텍스트를 인식하지 못했습니다.' });
         return true;

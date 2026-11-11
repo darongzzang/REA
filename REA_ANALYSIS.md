@@ -49,4 +49,4 @@ DOM에서 Next.js의 `/_next/static/chunks/` 자산 참조도 확인했다. 이�
 - 입력 후 실제 번역 결과나 원본 번역 API의 요청·응답은 확인하지 않았다. 입력 직후 접근성 트리에는 결과가 없었다. 원본이 어느 요청을 보내는지, 어떤 조건에서 번역되는지는 미확인이다.
 - 이미지 파일 자체를 업로드하거나 OCR·번역 결과를 관찰하지 않았다. History·Favorites·Glossary·Settings 및 Document·Voice·Website의 내부 화면도 열지 않았다.
 - 원본 페이지의 로케일, 로그인 상태, 화면 크기별 UI가 달라질 수 있다. 반응형 중단점과 CSS 수치의 정확한 동일성은 검증하지 않았다.
-- 이 프로젝트는 현재 MyMemory REST API로 텍스트를 번역하고 macOS Apple Vision으로 이미지 OCR을 시도하는 **독립 구현**이다. 이전 NAVER Cloud 중계는 제거했다. 이 변경은 위 REA 원본 Papago 관찰 결과를 바꾸지 않으며, 원본 웹사이트가 MyMemory를 사용한다는 증거도 없다.
+- 이 프로젝트는 현재 MyMemory REST API로 텍스트를 번역하고 운영체제 독립형 Tesseract.js로 이미지 OCR을 시도하는 **독립 구현**이다. 이전 NAVER Cloud 중계와 macOS Apple Vision 의존성은 제거했다. 이 변경은 위 REA 원본 Papago 관찰 결과를 바꾸지 않으며, 원본 웹사이트가 MyMemory를 사용한다는 증거도 없다.
