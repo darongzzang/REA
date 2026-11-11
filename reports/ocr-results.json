@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-11T02:41:47.993Z",
+  "generatedAt": "2026-11-11T04:26:36.365Z",
   "imageDirectory": "tests/images",
   "summary": {
     "totalImages": 10,
@@ -11,38 +11,38 @@
     "ocrSuccess": 10,
     "ocrFailure": 0,
     "engineErrors": 0,
-    "accuracyEvaluated": 0,
-    "accuracyUnevaluated": 10,
+    "accuracyEvaluated": 10,
+    "accuracyUnevaluated": 0,
     "accuracySkippedDueToOcrError": 0,
-    "averageDurationMs": 198.43785000000003,
-    "maxDurationMs": 299.611,
+    "averageDurationMs": 196.50896260000005,
+    "maxDurationMs": 264.803708,
     "accuracy": {
       "ko": {
-        "evaluated": 0,
-        "characterEdits": 0,
-        "characterCount": 0,
-        "wordEdits": 0,
-        "wordCount": 0,
-        "cer": null,
-        "wer": null
+        "evaluated": 5,
+        "characterEdits": 4,
+        "characterCount": 59,
+        "wordEdits": 3,
+        "wordCount": 16,
+        "cer": 0.06779661016949153,
+        "wer": 0.1875
       },
       "jp": {
-        "evaluated": 0,
-        "characterEdits": 0,
-        "characterCount": 0,
-        "wordEdits": 0,
-        "wordCount": 0,
-        "cer": null,
-        "wer": null
+        "evaluated": 5,
+        "characterEdits": 38,
+        "characterCount": 50,
+        "wordEdits": 41,
+        "wordCount": 5,
+        "cer": 0.76,
+        "wer": 8.2
       },
       "overall": {
-        "evaluated": 0,
-        "characterEdits": 0,
-        "characterCount": 0,
-        "wordEdits": 0,
-        "wordCount": 0,
-        "cer": null,
-        "wer": null
+        "evaluated": 10,
+        "characterEdits": 42,
+        "characterCount": 109,
+        "wordEdits": 44,
+        "wordCount": 21,
+        "cer": 0.3853211009174312,
+        "wer": 2.0952380952380953
       }
     }
   },
@@ -54,11 +54,18 @@
       "caseId": 1,
       "ocrText": "今日 わ 記 念 日 で す よ ね !",
       "confidence": 82,
-      "durationMs": 299.611,
+      "durationMs": 264.803708,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 10,
+        "characterCount": 11,
+        "wordEdits": 10,
+        "wordCount": 1,
+        "cer": 0.9090909090909091,
+        "wer": 10
+      },
+      "groundTruth": "今日わ記念日ですよね！"
     },
     {
       "fileName": "jp2.png",
@@ -67,11 +74,18 @@
       "caseId": 2,
       "ocrText": "私 の 名 前 わ キ ム で す 。",
       "confidence": 93,
-      "durationMs": 237.19679200000007,
+      "durationMs": 232.77445800000004,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 9,
+        "characterCount": 10,
+        "wordEdits": 10,
+        "wordCount": 1,
+        "cer": 0.9,
+        "wer": 10
+      },
+      "groundTruth": "私の名前わキムです。"
     },
     {
       "fileName": "jp3.png",
@@ -80,11 +94,18 @@
       "caseId": 3,
       "ocrText": "味噌 汁 う まい な へ",
       "confidence": 85,
-      "durationMs": 228.288541,
+      "durationMs": 226.59054200000003,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 6,
+        "characterCount": 8,
+        "wordEdits": 6,
+        "wordCount": 1,
+        "cer": 0.75,
+        "wer": 6
+      },
+      "groundTruth": "味噌汁うまいな〜"
     },
     {
       "fileName": "jp4.png",
@@ -93,11 +114,18 @@
       "caseId": 4,
       "ocrText": "や っ ぱり 和食 の 寿司 が いい ね",
       "confidence": 95,
-      "durationMs": 249.42325000000005,
+      "durationMs": 250.72375,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 8,
+        "characterCount": 13,
+        "wordEdits": 9,
+        "wordCount": 1,
+        "cer": 0.6153846153846154,
+        "wer": 9
+      },
+      "groundTruth": "やっぱり和食の寿司がいいね"
     },
     {
       "fileName": "jp5.png",
@@ -106,11 +134,18 @@
       "caseId": 5,
       "ocrText": "心臓 お ささ げ よ う",
       "confidence": 92,
-      "durationMs": 225.02166699999998,
+      "durationMs": 242.27545900000007,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 5,
+        "characterCount": 8,
+        "wordEdits": 6,
+        "wordCount": 1,
+        "cer": 0.625,
+        "wer": 6
+      },
+      "groundTruth": "心臓おささげよう"
     },
     {
       "fileName": "ko1.png",
@@ -119,11 +154,18 @@
       "caseId": 1,
       "ocrText": "저는 대학교에 다니고 있습니다.",
       "confidence": 92,
-      "durationMs": 169.33062500000005,
+      "durationMs": 169.0335,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 1,
+        "characterCount": 16,
+        "wordEdits": 1,
+        "wordCount": 4,
+        "cer": 0.0625,
+        "wer": 0.25
+      },
+      "groundTruth": "저는 대학교에 다니고 있습니다"
     },
     {
       "fileName": "ko2.png",
@@ -132,11 +174,18 @@
       "caseId": 2,
       "ocrText": "저는 시흥에 거주합니다",
       "confidence": 92,
-      "durationMs": 155.3403330000001,
+      "durationMs": 153.56320800000003,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 0,
+        "characterCount": 12,
+        "wordEdits": 0,
+        "wordCount": 3,
+        "cer": 0,
+        "wer": 0
+      },
+      "groundTruth": "저는 시흥에 거주합니다"
     },
     {
       "fileName": "ko3.png",
@@ -145,11 +194,18 @@
       "caseId": 3,
       "ocrText": "너 이름이 뭐야?",
       "confidence": 90,
-      "durationMs": 138.55683299999987,
+      "durationMs": 139.740542,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 0,
+        "characterCount": 9,
+        "wordEdits": 0,
+        "wordCount": 3,
+        "cer": 0,
+        "wer": 0
+      },
+      "groundTruth": "너 이름이 뭐야?"
     },
     {
       "fileName": "ko4.png",
@@ -158,11 +214,18 @@
       "caseId": 4,
       "ocrText": "국밥 때네\n아이고",
       "confidence": 70,
-      "durationMs": 136.14270899999997,
+      "durationMs": 137.06170900000006,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 2,
+        "characterCount": 10,
+        "wordEdits": 1,
+        "wordCount": 3,
+        "cer": 0.2,
+        "wer": 0.3333333333333333
+      },
+      "groundTruth": "국밥 땡기네\n아이고"
     },
     {
       "fileName": "ko5.png",
@@ -171,11 +234,18 @@
       "caseId": 5,
       "ocrText": "오늘은 빼빼로 데이!!|",
       "confidence": 93,
-      "durationMs": 145.46675000000005,
+      "durationMs": 148.5227500000001,
       "status": "success",
       "error": null,
-      "metrics": null,
-      "groundTruth": ""
+      "metrics": {
+        "characterEdits": 1,
+        "characterCount": 12,
+        "wordEdits": 1,
+        "wordCount": 3,
+        "cer": 0.08333333333333333,
+        "wer": 0.3333333333333333
+      },
+      "groundTruth": "오늘은 빼빼로 데이!!"
     }
   ],
   "environment": {
